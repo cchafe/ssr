@@ -587,6 +587,9 @@ RendererBase<Derived>::load_dynamic_scene(const std::string& scene_file_name)
     }
     sources.push_back(std::move(source));
   }
+  SSR_VERBOSE("Loaded scene with "
+      << file_sources << " file source(s) and "
+      << live_sources << " live source(s).");
   _scene = std::move(scene);
   return sources;
 }
