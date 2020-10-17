@@ -149,15 +149,17 @@ jobs:
         run: |
           sudo cp SDK/MacOSX/Sample/*.h /usr/local/include
           sudo cp SDK/MacOSX/UniversalLib/libisense.dylib /usr/local/lib
+      - name: Install cargo-c
+        run: |
+          cargo install cargo-c --force
       - name: Clone ASDF repo
         uses: actions/checkout@v2
         with:
           repository:  AudioSceneDescriptionFormat/asdf-rust
           submodules: true
-      - name: Install cargo-c
-        run: |
-          cargo install cargo-c --force
+          path: asdf-rust
       - name: Build and install ASDF library
+        working-directory: asdf-rust
         run: |
           cargo cinstall --release --prefix=/usr/local --destdir=temp
           sudo cp -r temp/usr/local/* /usr/local/
