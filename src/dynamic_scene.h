@@ -75,7 +75,7 @@ public:
           usleeptime))
   {
     if (!_ptr) {
-      throw std::runtime_error(asdf_scene_last_error());
+      throw std::runtime_error(asdf_last_error());
     }
     auto file_sources = this->file_sources();
     _audio_data.resize(file_sources * blocksize);
@@ -92,7 +92,7 @@ public:
 
   size_t file_sources() const
   {
-    return asdf_scene_file_sources(_ptr);
+    return asdf_file_sources(_ptr);
   }
 
   size_t live_sources() const
@@ -103,13 +103,13 @@ public:
 
   DynamicSource get_source(size_t index) const {
     assert(_ptr);
-    auto* source = asdf_scene_get_source(_ptr, index);
+    auto* source = asdf_get_sourceinfo(_ptr, index);
     if (source == nullptr)
     {
-      throw std::runtime_error(asdf_scene_last_error());
+      throw std::runtime_error(asdf_last_error());
     }
     DynamicSource result{source->id, source->name, source->model};
-    asdf_source_free(source);
+    asdf_sourceinfo_free(source);
     return result;
   }
 
@@ -121,7 +121,7 @@ public:
   bool seek(size_t frame)
   {
     assert(_ptr);
-    return asdf_scene_seek(_ptr, frame);
+    return asdf_seek(_ptr, frame);
   }
 
   /// This is realtime-safe
@@ -129,11 +129,11 @@ public:
   {
     if (_file_source_ptrs.empty()) { return; };
     assert(_ptr);
-    auto success = asdf_scene_get_audio_data(
+    auto success = asdf_get_audio_data(
         _ptr, _file_source_ptrs.data(), rolling);
     if (!success)
     {
-      throw std::runtime_error(asdf_scene_last_error());
+      throw std::runtime_error(asdf_last_error());
     }
   }
 
@@ -143,7 +143,7 @@ public:
   get_source_transform(size_t source_idx, frame_count_t frame) const
   {
     assert(_ptr);
-    auto t = asdf_scene_get_source_transform(_ptr, source_idx, frame);
+    auto t = asdf_get_source_transform(_ptr, source_idx, frame);
     std::optional<Transform> result{};
     if (t.active)
     {
@@ -155,7 +155,7 @@ public:
   Transform get_reference_transform(frame_count_t frame) const
   {
     assert(_ptr);
-    auto t = asdf_scene_get_reference_transform(_ptr, frame);
+    auto t = asdf_get_reference_transform(_ptr, frame);
     assert(t.active);
     return {t};
   }
