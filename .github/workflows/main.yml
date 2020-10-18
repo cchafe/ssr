@@ -163,6 +163,10 @@ jobs:
         run: |
           cargo cinstall --release --prefix=/usr/local --destdir=temp
           sudo cp -r temp/usr/local/* /usr/local/
+      - name: Update dynamic linker cache for libasdf
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          sudo ldconfig
       - run: |
           ./autogen.sh
       - name: configure
