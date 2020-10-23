@@ -1861,10 +1861,11 @@ Controller<Renderer>::_load_dynamic_asdf(const std::string& scene_file_name)
 {
   assert(!_conf.follow);
 
-  std::vector<DynamicSource> sources;
+  std::vector<DynamicSourceInfo> sources;
   try
   {
-    sources = _renderer.load_dynamic_scene(scene_file_name);
+    sources = _renderer.load_dynamic_scene(
+        scene_file_name, _conf.input_port_prefix);
   }
   catch (std::exception& e)
   {
@@ -1896,26 +1897,14 @@ Controller<Renderer>::_load_dynamic_asdf(const std::string& scene_file_name)
 
     _publish(&api::SceneInformationEvents::new_source, source.id);
 
-#if 0
-    const std::string& source_port = _renderer.get_source(id)->port_name();
-    for (const std::string& clip_port: scene_ptr->get_jack_ports(i))
-    {
-      if (!_renderer.connect_ports(clip_port, source_port))
-      {
-        ERROR("Unable to connect JACK ports \"" << clip_port << "\" and \""
-           << source_port << "\"");
-      }
-    }
-#endif
-
     _publish(&api::SceneInformationEvents::source_property
-        , source.id, "port-name", "???");
+        , source.id, "port-name", "n/a");
     _publish(&api::SceneInformationEvents::source_property
-        , source.id, "audio-file", "???");
+        , source.id, "audio-file", "n/a");
     _publish(&api::SceneInformationEvents::source_property
-        , source.id, "audio-file-channel", "???");
+        , source.id, "audio-file-channel", "n/a");
     _publish(&api::SceneInformationEvents::source_property
-        , source.id, "audio-file-length", "???");
+        , source.id, "audio-file-length", "n/a");
 
     // TODO:
     //_publish(&api::SceneInformationEvents::source_property

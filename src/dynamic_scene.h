@@ -38,11 +38,12 @@ namespace ssr
 
 using frame_count_t = uint64_t;
 
-struct DynamicSource
+struct DynamicSourceInfo
 {
   std::string id;
   std::string name;
   std::string model;
+  std::string port;
 };
 
 struct Transform
@@ -97,18 +98,18 @@ public:
 
   size_t live_sources() const
   {
-    // TODO: implement
-    return 0;
+    return asdf_live_sources(_ptr);
   }
 
-  DynamicSource get_source(size_t index) const {
+  DynamicSourceInfo get_sourceinfo(size_t index) const {
     assert(_ptr);
     auto* source = asdf_get_sourceinfo(_ptr, index);
     if (source == nullptr)
     {
       throw std::runtime_error(asdf_last_error());
     }
-    DynamicSource result{source->id, source->name, source->model};
+    DynamicSourceInfo result{source->id, source->name, source->model
+      , source->port};
     asdf_sourceinfo_free(source);
     return result;
   }

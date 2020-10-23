@@ -163,8 +163,9 @@ class RendererBase : public apf::MimoProcessor<Derived
 #ifdef ENABLE_DYNAMIC_ASDF
     struct Process;
 
-    std::vector<DynamicSource>
-    load_dynamic_scene(const std::string& scene_file_name);
+    std::vector<DynamicSourceInfo>
+    load_dynamic_scene(const std::string& scene_file_name
+        , const std::string& input_port_prefix);
 #endif
 
     template<typename L, typename ListProxy, typename DataMember>
@@ -513,11 +514,10 @@ struct RendererBase<Derived>::Process : _base::Process
 /// This has to be called while the controller lock is held.
 /// All existing sources must be removed before calling this.
 template<typename Derived>
-std::vector<DynamicSource>
-RendererBase<Derived>::load_dynamic_scene(const std::string& scene_file_name)
+std::vector<DynamicSourceInfo>
+RendererBase<Derived>::load_dynamic_scene(const std::string& scene_file_name
+    , const std::string& input_port_prefix)
 {
-  // TODO: pass input prefix?
-
   assert(_source_map.empty());
 
   // NB: This is important because the audio thread checks _scene first
@@ -549,13 +549,13 @@ RendererBase<Derived>::load_dynamic_scene(const std::string& scene_file_name)
 
   // TODO: reset "state buffer"?
 
-  std::vector<DynamicSource> sources;
+  std::vector<DynamicSourceInfo> sources;
   sources.reserve(total_sources);
 
   for (size_t i = 0; i < total_sources; i++)
   {
     apf::parameter_map p;
-    auto source = scene->get_source(i);
+    auto source = scene->get_sourceinfo(i);
 
     // TODO:
     //p.set("properties-file", ???);
@@ -567,8 +567,8 @@ RendererBase<Derived>::load_dynamic_scene(const std::string& scene_file_name)
     }
     else
     {
-      // TODO: pass JACK port
-      //p.set("connect-to", input_prefix + ???);
+      assert(file_source_ptr == nullptr);  // A JACK port will be created
+      p.set("connect-to", input_port_prefix + source.port);
     }
 
     p.set("dynamic_number", i);
