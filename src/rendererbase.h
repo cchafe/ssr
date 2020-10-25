@@ -571,7 +571,7 @@ RendererBase<Derived>::load_dynamic_scene(const std::string& scene_file_name
       p.set("connect-to", input_port_prefix + source.port);
     }
 
-    p.set("dynamic_number", i);
+    p.set("dynamic-number", i);
 
     try
     {
@@ -642,7 +642,7 @@ class RendererBase<Derived>::Source
       , weighting_factor()
       , id(p.id)
 #ifdef ENABLE_DYNAMIC_ASDF
-      , dynamic_number(p.template get<size_t>("dynamic_number", -1))
+      , dynamic_number(p.template get<size_t>("dynamic-number", -1))
 #endif
       , _input(p.input)
       , _pre_fader_level()
