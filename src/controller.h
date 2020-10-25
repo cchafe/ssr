@@ -444,21 +444,6 @@ Controller<Renderer>::Controller(int argc, char* argv[])
   }
 #endif
 
-  if ((_conf.ip_server || _conf.websocket_server) && _conf.freewheeling)
-  {
-    SSR_WARNING("Freewheel mode cannot be used together with "
-        "--ip-server or --websocket-server. Ignored.\n"
-        "Type '" + _conf.exec_name + " --help' for more information.");
-    _conf.freewheeling = false;
-  }
-
-  if (_conf.freewheeling && _conf.gui)
-  {
-    SSR_WARNING("In 'freewheeling' mode the GUI cannot be used! Disabled.\n"
-        "Type '" + _conf.exec_name + " --help' for more information.");
-    _conf.gui = false;
-  }
-
   // NB: we don't need a lock here because nothing is publishing yet
 
   _subscribe<api::SceneControlEvents>(&_scene);
@@ -502,6 +487,30 @@ Controller<Renderer>::Controller(int argc, char* argv[])
 
   if (_conf.freewheeling)
   {
+    if ((_conf.ip_server || _conf.websocket_server || _conf.fudi_server))
+    {
+      SSR_WARNING("Freewheel mode: network interfaces are disabled");
+      _conf.ip_server = false;
+      _conf.websocket_server = false;
+      _conf.fudi_server = false;
+    }
+    if (_conf.gui)
+    {
+      SSR_WARNING("Freewheel mode: GUI is disabled");
+      _conf.gui = false;
+    }
+    if (_conf.tracker != "")
+    {
+      SSR_WARNING("Freewheel mode: Headtrackers are disabled");
+      _conf.tracker = "";
+      _conf.tracker_ports = "";
+    }
+    if (_renderer.get_transport_state().first)
+    {
+      // TODO: is this necessary?
+      SSR_WARNING("Freewheel mode: stopping transport before loading scene");
+      _renderer.transport_stop();
+    }
     if (!_renderer.set_freewheel(1))
     {
       throw std::runtime_error("Unable to switch to freewheeling mode!");
@@ -809,7 +818,27 @@ bool Controller<Renderer>::run()
     }
   }
 
-  if (_conf.gui)
+  if (_conf.freewheeling)
+  {
+    this->take_control()->transport_rolling(true);
+
+    SSR_VERBOSE("Freewheeling forever ...");
+
+    // TODO: wait for scene to end
+
+    while (true)
+    {
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+
+    // TODO: stop freewheeling in the end
+
+    if (!_renderer.set_freewheel(0))
+    {
+      throw std::runtime_error("Unable to switch out of freewheeling mode!");
+    }
+  }
+  else if (_conf.gui)
   {
 #ifdef ENABLE_GUI
     if (_start_gui(_conf.path_to_gui_images, _conf.path_to_scene_menu) != 0)
