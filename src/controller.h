@@ -505,16 +505,6 @@ Controller<Renderer>::Controller(int argc, char* argv[])
       _conf.tracker = "";
       _conf.tracker_ports = "";
     }
-    if (_renderer.get_transport_state().first)
-    {
-      // TODO: is this necessary?
-      SSR_WARNING("Freewheel mode: stopping transport before loading scene");
-      _renderer.transport_stop();
-    }
-    if (!_renderer.set_freewheel(1))
-    {
-      throw std::runtime_error("Unable to switch to freewheeling mode!");
-    }
   }
 
 #ifdef ENABLE_IP_INTERFACE
@@ -820,6 +810,11 @@ bool Controller<Renderer>::run()
 
   if (_conf.freewheeling)
   {
+    if (!_renderer.set_freewheel(1))
+    {
+      throw std::runtime_error("Unable to switch to freewheeling mode!");
+    }
+
     this->take_control()->transport_rolling(true);
 
     SSR_VERBOSE("Freewheeling forever ...");
