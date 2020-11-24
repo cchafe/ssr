@@ -825,13 +825,6 @@ bool Controller<Renderer>::run()
     {
       std::this_thread::sleep_for(std::chrono::seconds(1));
     }
-
-    // TODO: stop freewheeling in the end
-
-    if (!_renderer.set_freewheel(0))
-    {
-      throw std::runtime_error("Unable to switch out of freewheeling mode!");
-    }
   }
   else if (_conf.gui)
   {
@@ -878,6 +871,13 @@ bool Controller<Renderer>::run()
 template<typename Renderer>
 Controller<Renderer>::~Controller()
 {
+  if (_conf.freewheeling)
+  {
+    if (!_renderer.set_freewheel(0))
+    {
+      SSR_ERROR("Unable to switch out of freewheeling mode!");
+    }
+  }
   _renderer.deactivate();
   if (!_conf.follow)
   {
