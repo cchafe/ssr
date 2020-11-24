@@ -442,8 +442,15 @@ struct RendererBase<Derived>::Process : _base::Process
 
     auto [rolling, transport_frame] = parent.get_transport_state();
 
-    // TODO: check for errors (check exceptions)
-    scene->update_audio_data(rolling);
+    try
+    {
+      scene->update_audio_data(rolling);
+    }
+    catch (std::exception& e)
+    {
+      SSR_ERROR("Unable to get source audio data: " << e.what());
+      throw;
+    }
 
     {
       auto t = scene->get_reference_transform(transport_frame);
