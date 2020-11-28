@@ -237,6 +237,8 @@ class RendererBase : public apf::MimoProcessor<Derived
     apf::SharedData<std::unique_ptr<dynamic_source_list_t>> dynamic_sources;
     // NB: This is only ever accessed from the realtime thread:
     Transform dynamic_reference{};
+
+    bool freewheeling;
 #endif
 
   protected:
@@ -276,6 +278,7 @@ class RendererBase : public apf::MimoProcessor<Derived
     }
 
     apf::SharedData<std::unique_ptr<DynamicScene>> _scene;
+    uint64_t usleeptime;
 #endif
 };
 
@@ -290,6 +293,7 @@ RendererBase<Derived>::RendererBase(const apf::parameter_map& p)
         this->params.get("master_volume_correction", 0.0)))
 #ifdef ENABLE_DYNAMIC_ASDF
   , dynamic_sources(_fifo)
+  , freewheeling(this->params.get("freewheeling", false))
 #endif
   , _master_level()
   , _source_list(_fifo)
@@ -442,14 +446,40 @@ struct RendererBase<Derived>::Process : _base::Process
 
     auto [rolling, transport_frame] = parent.get_transport_state();
 
-    try
+    while (true)
     {
-      scene->update_audio_data(rolling);
-    }
-    catch (std::exception& e)
-    {
-      SSR_ERROR("Unable to get source audio data: " << e.what());
-      throw;
+      auto result = scene->update_audio_data(rolling);
+      if (result == ASDF_STREAMING_SUCCESS)
+      {
+        break;
+      }
+      else if (result == ASDF_STREAMING_EMPTY_BUFFER)
+      {
+        if (parent.freewheeling)
+        {
+          // Do nothing, just try again later ...
+        }
+        else
+        {
+          SSR_ERROR("ASDF streaming: empty buffer");
+          throw std::runtime_error("exiting callback");
+        }
+      }
+      else if (result == ASDF_STREAMING_INCOMPLETE_SEEK)
+      {
+        SSR_ERROR("Bug: incomplete seek");
+        throw std::runtime_error("exiting callback");
+      }
+      else if (result == ASDF_STREAMING_SEEK_WHILE_ROLLING)
+      {
+        SSR_ERROR("Bug: seek while rolling");
+        throw std::runtime_error("exiting callback");
+      }
+      else
+      {
+        assert(false);
+      }
+      std::this_thread::sleep_for(std::chrono::microseconds(parent.usleeptime));
     }
 
     {
@@ -539,10 +569,10 @@ RendererBase<Derived>::load_dynamic_scene(const std::string& scene_file_name
   float sleep_time = 0.1;  // seconds
   uint32_t buffer_blocks = std::ceil(buffer_time * this->sample_rate() /
     this->block_size());
-  uint64_t usleeptime = sleep_time * 1000.0f * 1000.0f;
+  this->usleeptime = sleep_time * 1000.0f * 1000.0f;
   auto scene = std::make_unique<DynamicScene>(
       scene_file_name, this->sample_rate(), this->block_size(),
-      buffer_blocks, usleeptime);
+      buffer_blocks, this->usleeptime);
 
   auto file_sources = scene->file_sources();
   auto live_sources = scene->live_sources();

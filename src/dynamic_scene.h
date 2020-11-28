@@ -30,7 +30,7 @@
 
 #include <vector>
 
-#include "asdf.h"
+#include <asdf.h>
 #include "geometry.h"
 
 namespace ssr
@@ -125,17 +125,11 @@ public:
     return asdf_seek(_ptr, frame);
   }
 
-  /// This is realtime-safe
-  void update_audio_data(bool rolling)
+  AsdfStreamingResult update_audio_data(bool rolling)
   {
-    if (_file_source_ptrs.empty()) { return; };
     assert(_ptr);
-    auto success = asdf_get_audio_data(
-        _ptr, _file_source_ptrs.data(), rolling);
-    if (!success)
-    {
-      throw std::runtime_error(asdf_last_error());
-    }
+    // NB: if there are no file sources, data() may return NULL.
+    return asdf_get_audio_data(_ptr, _file_source_ptrs.data(), rolling);
   }
 
   /// This is realtime-safe
