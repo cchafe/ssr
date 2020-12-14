@@ -494,7 +494,11 @@ struct RendererBase<Derived>::Process : _base::Process
         parent.dynamic_reference.pos = position;
         parent.state.reference_position.set_from_rt_thread(position);
       }
-      // TODO: set other transform members
+      auto volume = t.vol;
+      if (volume != parent.dynamic_reference.vol) {
+        parent.dynamic_reference.vol = volume;
+        parent.state.master_volume.set_from_rt_thread(std::move(volume));
+      }
     }
 
     // NB: Functions for checking dynamic sources are not thread safe,
@@ -533,7 +537,12 @@ struct RendererBase<Derived>::Process : _base::Process
           source.position.set_from_rt_thread(position);
         }
 
-        // TODO: handle other Transform members!
+        auto volume = transform->vol;
+        if (volume != target_transform->vol)
+        {
+          target_transform->vol = volume;
+          source.gain.set_from_rt_thread(std::move(volume));
+        }
       }
       else
       {

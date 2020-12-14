@@ -50,18 +50,18 @@ struct Transform
 {
   quat rot;
   vec3 pos;
-
-  // TODO: more stuff
+  float vol;
 
   Transform()
     : rot{0.0f, {1.0f, 0.0f, 0.0f}}
     , pos{}
+    , vol{1.0f}
   {}
 
   Transform(const AsdfTransform& t)
     : rot{t.rot_s, vec3{t.rot_v[0], t.rot_v[1], t.rot_v[2]}}
     , pos{t.pos[0], t.pos[1], t.pos[2]}
-    // TODO: other fields
+    , vol{t.vol}
   {}
 };
 
