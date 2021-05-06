@@ -420,7 +420,15 @@ private:
   void renderer_name(const std::string& name) override
   {
     assert(_buffer);
-    fmt::format_to(*_buffer, "renderer-name ");
+    fmt::format_to(*_buffer, "renderer-name");
+    _escaped_string(name);
+    fmt::format_to(*_buffer, ";\n");
+  }
+
+  void instance_name(const std::string& name) override
+  {
+    assert(_buffer);
+    fmt::format_to(*_buffer, "instance-name");
     _escaped_string(name);
     fmt::format_to(*_buffer, ";\n");
   }
