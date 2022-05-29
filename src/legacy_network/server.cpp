@@ -69,7 +69,9 @@ Server::handle_accept(Connection::pointer new_connection
   if (!error)
   {
     // A hack to mimic the old behavior of the legacy network interface:
-    new_connection->write(_scene_provider.get_scene_as_XML());
+    //cc crashes, commented out
+    //cc new_connection->write(_scene_provider.get_scene_as_XML());
+    fprintf(stderr,"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"); //cc
     new_connection->start();
     start_accept();
   }
